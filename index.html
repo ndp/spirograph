@@ -1,0 +1,128 @@
+<html><head>
+    <title>Spirograph Laboratory</title>
+        <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;"> 
+        <link rel="apple-touch-icon" href="apple_touch_icon.png"/> 
+    <script src="jquery-1.4.3.js" type="text/javascript" language="javascript">
+</script>
+    <script src="color_helpers.js" type="text/javascript" language="javascript">
+</script>
+    <script src="color_factory.js" type="text/javascript" language="javascript">
+</script>
+
+    <script type="application/x-javascript">
+      var width = 320;
+      var height = 480;
+      function drawInCanvas(R, r, O, options) {
+        var ctx = document.getElementById('canvas').getContext('2d');
+		ctx.fillStyle = options.fillStyle;
+        ctx.fillRect(0,0,width,height);
+		ctx.save();
+		ctx.strokeStyle = options.strokeStyle;
+		ctx.lineWidth = options.lineWidth;
+		ctx.translate(width/6+width/3,height/6+height/3);
+        drawSpirograph(ctx,R,r,O, options.adjustFn);
+		ctx.restore();
+      }
+      function drawSpirograph(ctx,R,r,O, adjustFn){
+        var x1 = R-O;
+        var y1 = 0;
+        var i  = 1;
+        do {
+          if (i>30000) break;
+          var angle = i*Math.PI/144*2;
+          var x2 = (R+r)*Math.cos(angle) - (r+O)*Math.cos(((R+r)/r)*(angle))
+          var y2 = (R+r)*Math.sin(angle) - (r+O)*Math.sin(((R+r)/r)*(angle))
+          if (adjustFn) adjustFn(ctx, angle, [x1,y1],  [x2,y2]);
+          ctx.beginPath();
+          ctx.moveTo(x1,y1);
+          ctx.lineTo(x2,y2);
+          ctx.stroke();
+          x1 = x2;
+          y1 = y2;
+          i++;
+        } while (x2 != R-O && y2 != 0 );
+      }
+      
+      var drawFromInputs = function() {
+        var R = 1.0*document.getElementById('R').value;
+        var r = 1.0*document.getElementById('radius').value;
+        var O = 1.0*document.getElementById('O').value;
+        var lineWidth = 1.0 * document.getElementById('width').value;
+        if (lineWidth < 0.1) lineWidth = 0.1;
+        if (lineWidth > 100) lineWidth = 100;
+        var fillStyle = document.getElementById('white').checked ? 'white' : 'black';
+        var strokeStyle = document.getElementById('random_color').checked ? ColorFactory.randomHue(50,40) : 'chartreuse';
+        
+        
+        var adjustFn = function(ctx, angle, p1, p2) {
+            if (document.getElementById('random_lines').checked) {
+  			  ctx.strokeStyle = ColorFactory.randomHue(50,40);
+            }
+            if (document.getElementById('rainbow').checked) {
+  			  ctx.strokeStyle = ColorHelper.hslToHexColor(angle, 100, 50);
+            }
+            if (document.getElementById('wiggle').checked) {
+    		  ctx.lineWidth = Math.abs(Math.sin(angle)) * lineWidth;
+            }
+        }
+        
+        drawInCanvas(R, r, O,{adjustFn: adjustFn, 
+        			lineWidth: lineWidth, 
+        			fillStyle: fillStyle,
+        			strokeStyle: strokeStyle });
+      }
+      
+      var repeatDrawFromInputs = function(ms) {
+      	drawFromInputs();
+        setTimeout(function() {repeatDrawFromInputs(ms)}, ms);
+      }
+      
+      $(function() {
+      	$('input').keydown(function(e)  {
+      	  var keyCode = e.keyCode || e.which;
+	      	if (keyCode == 38) { 
+      		   $(this).val(1.0 * $(this).val() + 1);
+	      	   return false;
+      		} else if (keyCode == 40) {
+      	  		$(this).val(1.0 * $(this).val() - 1);
+      		  return false;
+      		} 
+      	});
+      });
+    </script>
+    <style type="text/css">
+      body { margin: 0; background: white; font-size: x-large }
+      input { -webkit-text-size-adjust:none;font-weight:normal; color: #036; width: 60px; border-bottom: 1px solid #ccc; }
+      label { margin-left: -30px;-webkit-text-size-adjust:none;}
+      canvas { margin-right: 20px; margin-bottom: 20px; }
+      ul li { display: block; }
+    </style>
+</head><body onload="repeatDrawFromInputs(200)"  onorientationchange="updateOrientation();">
+      <canvas id="canvas" width="320" height="480"></canvas>
+    <div>
+      <input id="width" type="text" value="3">
+      <input id="R" type="text" value="50">
+      <input id="radius" type="text" value="40">
+      <input id="O" type="text"  value="30">
+      </div>
+      <div>
+      <ul>
+      <li>
+      <input type='checkbox' id='random_color' ><label for="random_color">Colors!</label>
+      </li>
+      <li>
+      <input type='checkbox' id='rainbow' ><label for="rainbow">Rainbow</label>
+      </li>
+      <li>
+      <input type='checkbox' id='random_lines' ><label for="random_lines">Lines for Andy</label>
+      </li>
+      <li>
+      <input type='checkbox' id='wiggle' ><label for="wiggle">Wiggle for Jeff</label>
+      </li>
+      <li>
+      <input type='checkbox' id='white' ><label for="white">On White</label>
+      </li>
+      </ul>
+    </div>
+    
+  </body></html>
